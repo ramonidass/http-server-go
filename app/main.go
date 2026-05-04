@@ -11,14 +11,14 @@ import (
 func main() {
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
-		log.Fatalf("Error: %v, err")
+		log.Fatalf("Error: %v", err)
 	}
 	fmt.Println("Server is running on http://localhost:4221")
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Fatalf("Error: %v, err")
+			log.Fatalf("Error: %v", err)
 		}
 		headersChan := handleConnection(conn)
 		go func(ch <-chan string) {
