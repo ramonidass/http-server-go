@@ -1,23 +1,68 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"net"
-	"os"
+	"strings"
 )
 
 func main() {
-	l, err := net.Listen("tcp", "0.0.0.0:4221")
+	listener, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
-		fmt.Println("Failed to bind to port 4221")
-		os.Exit(1)
+		log.Fatalf("Error: %v, err")
 	}
+	fmt.Println("Server is running on http://localhost:4221")
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection")
-		os.Exit(1)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatalf("Error: %v, err")
+		}
+		headersChan := handleConnection(conn)
+		go func(ch <-chan string) {
+			for line := range ch {
+				fmt.Println(line)
+			}
+		}(headersChan)
 	}
+}
 
-	conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+func handleConnection(conn net.Conn) <-chan string {
+	out := make(chan string)
+
+	go func() {
+		defer conn.Close() // close connection when done
+		defer close(out)
+
+		scanner := bufio.NewScanner(conn)
+		var requestPath string
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			// HTTP headers end with a blank line.
+			// We MUST break here, otherwise the scanner will wait forever.
+			if line == "" {
+				break
+			}
+			out <- line
+
+			if strings.HasPrefix(line, "GET ") {
+				parts := strings.Fields(line)
+				if len(parts) >= 2 {
+					requestPath = parts[1]
+				}
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Printf("Error reading from connection: %v", err)
+		}
+		if requestPath == "/" {
+			conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+		} else {
+			conn.Write([]byte("HTTP/1.1 400 Not Found\r\n\r\n"))
+		}
+	}()
+	return out
 }
