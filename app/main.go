@@ -9,14 +9,14 @@ import (
 )
 
 func main() {
-	listener, err := net.Listen("tcp", "0.0.0.0:4221")
+	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		log.Fatalf("Error: %v, err")
 	}
 	fmt.Println("Server is running on http://localhost:4221")
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := l.Accept()
 		if err != nil {
 			log.Fatalf("Error: %v, err")
 		}
