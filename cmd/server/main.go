@@ -60,6 +60,7 @@ func handleConnection(conn net.Conn) <-chan string {
 		}
 		if requestPath == "/" {
 			conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+		elif requestPath == 
 		} else {
 			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 		}
